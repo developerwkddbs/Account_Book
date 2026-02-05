@@ -31,12 +31,13 @@
         <canvas id="usageChart" height="100"></canvas>
 
         <form method="POST" action="/add">
-            <select name="type">
+            <select name="type" id="typeSelect">
                 <option value="income">수입</option>
                 <option value="expense">지출</option>
             </select>
+
+            <select name="memo" id="usageSelect"></select>
             <input type="number" name="amount" placeholder="금액" required>
-            <input type="text" name="memo" placeholder="메모">
             <button type="submit">추가</button>
         </form>
 
@@ -61,8 +62,8 @@
                     {% endif %}
                 </td>
                 <td>{{ r[2] }}</td>
-                <td>{{ r[3] }}</td>
-                <td>{{ r[4] }}</td>
+                <td>{{ r[3] }}</td> <!--사용처-->
+                <td>{{ r[4] }}</td> <!--날짜 및 시간-->
                 <td>
                     <a href="{{ url_for('delete', record_id=r[0]) }}"
                        onclick="return confirm('해당 기록을 삭제하시겠습니까?');">
@@ -74,6 +75,7 @@
         </table>
     </div>
     <script>
+        //차트
         fetch("/stats")
         .then(res => res.json())
         .then(data => {
@@ -105,18 +107,50 @@
             });
         });
 
-    flatpickr("#start_date", {
-        locale: "ko",
-        dateFormat: "Y-m-d",
-        monthSelectorType: "static"
-    });
+        //날짜 선택기
+        flatpickr("#start_date", {
+            locale: "ko",
+            dateFormat: "Y-m-d",
+            monthSelectorType: "static"
+        });
 
-    flatpickr("#end_date", {
-        locale: "ko",
-        dateFormat: "Y-m-d",
-         monthSelectorType: "static"
-    });
-</script>
+        flatpickr("#end_date", {
+            locale: "ko",
+            dateFormat: "Y-m-d",
+             monthSelectorType: "static"
+        });
+
+        //사용처 option
+        const incomeUsages = ["월급", "용돈", "상여금", "기타수입"];
+        const expenseUsages = ["식비","카페/간식", "생활비","교육/교재", "교통비", "쇼핑","의료/건강", "취미/여가","미용/화장", "기타지출"];
+
+        const typeSelect = document.getElementById("typeSelect");
+        const usageSelect = document.getElementById("usageSelect");
+
+        function updateUsageOptions() {
+            const type = typeSelect.value;
+            const options = (type === "income") ? incomeUsages : expenseUsages;
+
+            usageSelect.innerHTML = "";
+
+            const defaultOpt = document.createElement("option");
+            defaultOpt.value = "";
+            defaultOpt.textContent = "사용처 선택";
+            defaultOpt.disabled = true;
+            defaultOpt.selected = true;
+            usageSelect.appendChild(defaultOpt);
+
+            options.forEach(opt => {
+                const option = document.createElement("option");
+                option.value = opt;
+                option.textContent = opt;
+                usageSelect.appendChild(option);
+            });
+        }
+
+        typeSelect.addEventListener("change", updateUsageOptions);
+        updateUsageOptions(); // 페이지 로드시 한번 세팅
+    </script>
 
 </body>
 </html>
