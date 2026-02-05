@@ -3,20 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <title>가계부</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
     <h1>가계부</h1>
     <br>
     <h3>기간 조회</h3>
     <form method="get" action="/">
-        시작일:
-        <input type="date" name="start_date">
-        종료일:
-        <input type="date" name="end_date">
+        <input type="text" id="start_date" name="start_date" placeholder="시작일 선택">
+        <input type="text" id="end_date" name="end_date" placeholder="종료일 선택">
         <button type="submit">조회</button>
         <a href="/">초기화</a>
     </form>
     <hr>
+
+    <div class="container">
+        <div class="card">
+            <p>총 수입: {{ total_income }} 원</p>
+            <p>총 지출: {{ total_expense }} 원</p>
+            <h3>현재 잔액: {{ balance }} 원</h3>
+        </div>
+    </div>
 
     <div style="margin: 20px 0; padding: 10px; border: 1px solid #ccc;">
     <p>총 수입: {{ total_income }} 원</p>
@@ -47,9 +56,9 @@
         <tr>
             <td>
                 {% if r[1] == 'income' %}
-                    수입
+                    <span class="badge-income">수입</span>
                 {% elif r[1] == 'expense' %}
-                    지출
+                    <span class="badge-expense">지출</span>
                 {% else %}
                     {{ r[1] }}
                 {% endif %}
@@ -67,4 +76,19 @@
         {% endfor %}
     </table>
 </body>
+
+<script>
+    flatpickr("#start_date", {
+        locale: "ko",
+        dateFormat: "Y-m-d",
+        monthSelectorType: "static"
+    });
+
+    flatpickr("#end_date", {
+        locale: "ko",
+        dateFormat: "Y-m-d",
+        monthSelectorType: "static"
+    });
+</script>
+
 </html>
