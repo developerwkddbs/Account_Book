@@ -7,6 +7,17 @@ DB_NAME = "account_v2.db"
 def get_db():
     return sqlite3.connect(DB_NAME)
 
+def ensure_detail_column():
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("ALTER TABLE records ADD COLUMN detail TEXT")
+        conn.commit()
+    except:
+        pass
+    conn.close()
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     conn = get_db()
@@ -19,7 +30,7 @@ def index():
         start_date = request.args.get("start_date")
         end_date = request.args.get("end_date")
 
-    query = "SELECT id, type, amount, memo, created_at FROM records"
+    query = "SELECT id, type, amount, memo, detail, created_at FROM records"
     params = []
 
     if start_date and end_date:
@@ -47,6 +58,7 @@ def add():
     type_ = request.form.get("type")      # income / expense
     amount = request.form.get("amount")
     memo = request.form.get("memo")
+    detail=request.form.get("detail")
 
     if not type_ or not amount:
         return redirect(url_for("index"))
@@ -54,9 +66,10 @@ def add():
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO records (type, amount, memo, created_at) VALUES (?, ?, ?, datetime('now'))",
-        (type_, int(amount), memo)
+        "INSERT INTO records (type, amount, memo, detail, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
+        (type_, int(amount), memo, detail)
     )
+
     conn.commit()
     conn.close()
 
@@ -100,4 +113,5 @@ def stats_all_pie():
     return jsonify({"labels": labels, "data": data})
 
 if __name__ == "__main__":
+    ensure_detail_column()
     app.run(debug=True)

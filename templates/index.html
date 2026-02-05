@@ -34,6 +34,7 @@
             </select>
 
             <select name="memo" id="usageSelect" required></select>
+            <input type="text" name="detail" placeholder="상세내역"/>
             <input type="number" name="amount" placeholder="금액" required>
             <button type="submit">추가</button>
         </form>
@@ -44,6 +45,7 @@
                 <th>구분</th>
                 <th>금액</th>
                 <th>사용처</th>
+                <th>상세내역</th>
                 <th>날짜</th>
                 <th>삭제</th>
             </tr>
@@ -58,9 +60,10 @@
                         {{ r[1] }}
                     {% endif %}
                 </td>
-                <td>{{ r[2] }}</td>
-                <td>{{ r[3] }}</td> <!--사용처-->
-                <td>{{ r[4] }}</td> <!--날짜 및 시간-->
+                <td>{{ r[2] }}</td>  <!-- 금액 -->
+                <td>{{ r[3] }}</td>  <!-- 사용처 -->
+                <td>{{ r[4] or '-' }}</td>  <!-- 상세내역 -->
+                <td>{{ r[5] }}</td>  <!-- 날짜 -->
                 <td>
                     <a href="{{ url_for('delete', record_id=r[0]) }}"
                        onclick="return confirm('해당 기록을 삭제하시겠습니까?');">
