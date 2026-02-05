@@ -123,6 +123,22 @@ def stats_all_pie():
 
     return jsonify({"labels": labels, "data": data})
 
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT,
+            amount INTEGER,
+            memo TEXT,
+            detail TEXT,
+            created_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
 if __name__ == "__main__":
     ensure_detail_column()
     app.run(debug=True)
