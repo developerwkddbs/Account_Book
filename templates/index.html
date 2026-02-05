@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>가계부</title>
+</head>
+<body>
+    <h1>가계부</h1>
+
+    <form method="POST">
+        <select name="type">
+            <option value="income">수입</option>
+            <option value="expense">지출</option>
+        </select>
+        <input type="number" name="amount" placeholder="금액" required>
+        <input type="text" name="memo" placeholder="메모">
+        <button type="submit">추가</button>
+    </form>
+
+    <h2>내역</h2>
+    <table border="1">
+        <tr>
+            <th>구분</th>
+            <th>금액</th>
+            <th>메모</th>
+            <th>날짜</th>
+        </tr>
+        {% for r in records %}
+        <tr>
+            <td>{{ r[1] }}</td>
+            <td>{{ r[2] }}</td>
+            <td>{{ r[3] }}</td>
+            <td>{{ r[4] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
