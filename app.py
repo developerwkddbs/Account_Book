@@ -71,30 +71,23 @@ def delete(record_id):
     conn.close()
     return redirect(url_for("index"))
 
-@app.route("/stats")
-def stats():
+@app.route("/stats/pie")
+def stats_pie():
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT created_at,
-               SUM(CASE WHEN type='income' THEN amount ELSE 0 END) as income,
-               SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) as expense
+        SELECT 
+            SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS income,
+            SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS expense
         FROM records
-        GROUP BY DATE(created_at)
-        ORDER BY DATE(created_at)
     """)
-    rows = cur.fetchall()
+    income, expense = cur.fetchone()
     conn.close()
 
-    labels = [r[0][:10] for r in rows]
-    income_data = [r[1] for r in rows]
-    expense_data = [r[2] for r in rows]
-
     return jsonify({
-        "labels": labels,
-        "income": income_data,
-        "expense": expense_data
+        "labels": ["수입", "지출"],
+        "data": [income or 0, expense or 0]
     })
 
 if __name__ == "__main__":

@@ -134,3 +134,8 @@ tr:hover {
         width: 100%;
     }
 }
+
+.chart-wrapper{
+    max-width: 400px;
+    margin: 0 auto;
+}

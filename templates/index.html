@@ -27,16 +27,13 @@
             <h3>현재 잔액: {{ balance }} 원</h3>
         </div>
 
-        <h2>사용 그래프</h2>
-        <canvas id="usageChart" height="100"></canvas>
-
         <form method="POST" action="/add">
             <select name="type" id="typeSelect">
                 <option value="income">수입</option>
                 <option value="expense">지출</option>
             </select>
 
-            <select name="memo" id="usageSelect"></select>
+            <select name="memo" id="usageSelect" required></select>
             <input type="number" name="amount" placeholder="금액" required>
             <button type="submit">추가</button>
         </form>
@@ -73,40 +70,39 @@
             </tr>
             {% endfor %}
         </table>
+
+        <br><br>
+
+        <div class="chart-wrapper">
+            <canvas id="usageChart"></canvas>
+        </div>
     </div>
     <script>
-        //차트
-        fetch("/stats")
-        .then(res => res.json())
-        .then(data => {
-            const ctx = document.getElementById("usageChart").getContext("2d");
+        // ======================
+        // 1) 월별 수입 / 지출 그래프
+        // ======================
+        fetch("/stats/pie")
+            .then(res => res.json())
+            .then(data => {
+                const ctx = document.getElementById("usageChart").getContext("2d");
 
-            new Chart(ctx, {
-                type: "line",
+                new Chart(ctx, {
+                type: "pie",   // 또는 "doughnut"
                 data: {
-                    labels: data.labels,
-                    datasets: [
-                        {
-                            label: "수입",
-                            data: data.income,
-                            tension: 0.3
-                        },
-                        {
-                            label: "지출",
-                            data: data.expense,
-                            tension: 0.3
-                        }
-                    ]
+                labels: data.labels,
+                    datasets: [{
+                    data: data.data
+                    }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { position: "top" }
-                    }
+                      legend: { position: "bottom" }
+                   }
                 }
+                });
             });
-        });
-
+        
         //날짜 선택기
         flatpickr("#start_date", {
             locale: "ko",
@@ -120,19 +116,27 @@
              monthSelectorType: "static"
         });
 
-        //사용처 option
-        const incomeUsages = ["월급", "용돈", "상여금", "기타수입"];
-        const expenseUsages = ["식비","카페/간식", "생활비","교육/교재", "교통비", "쇼핑","의료/건강", "취미/여가","미용/화장", "기타지출"];
+        // 사용처 option (그룹)
+        const incomeGroups = {
+            "정기": ["월급", "용돈"],
+            "비정기": ["상여금", "환급/캐시백", "부수입"],
+            "기타": ["기타수입"]
+        };
+
+        const expenseGroups = {
+            "필수": ["식비", "생활비", "교통비", "교육/교재", "정기구독","회비"],
+            "선택": ["카페/간식", "쇼핑", "취미/여가", "미용/화장"],
+            "건강": ["의료/건강"],
+            "기타": ["기타지출"]
+        };
 
         const typeSelect = document.getElementById("typeSelect");
         const usageSelect = document.getElementById("usageSelect");
 
-        function updateUsageOptions() {
-            const type = typeSelect.value;
-            const options = (type === "income") ? incomeUsages : expenseUsages;
-
+        function setOptionsWithGroups(groups) {
             usageSelect.innerHTML = "";
 
+            // 기본 안내 옵션
             const defaultOpt = document.createElement("option");
             defaultOpt.value = "";
             defaultOpt.textContent = "사용처 선택";
@@ -140,17 +144,30 @@
             defaultOpt.selected = true;
             usageSelect.appendChild(defaultOpt);
 
-            options.forEach(opt => {
-                const option = document.createElement("option");
-                option.value = opt;
-                option.textContent = opt;
-                usageSelect.appendChild(option);
+            // 그룹별 옵션 추가
+            Object.entries(groups).forEach(([groupName, items]) => {
+                const og = document.createElement("optgroup");
+                og.label = groupName;
+
+                items.forEach(text => {
+                    const opt = document.createElement("option");
+                    opt.value = text;
+                    opt.textContent = text;
+                    og.appendChild(opt);
+                });
+
+                usageSelect.appendChild(og);
             });
         }
 
-        typeSelect.addEventListener("change", updateUsageOptions);
-        updateUsageOptions(); // 페이지 로드시 한번 세팅
-    </script>
+        function updateUsageOptions() {
+            const type = typeSelect.value;
+            if (type === "income") setOptionsWithGroups(incomeGroups);
+            else setOptionsWithGroups(expenseGroups);
+        }
 
+        typeSelect.addEventListener("change", updateUsageOptions);
+        updateUsageOptions(); // 페이지 로드시 한번 세팅        
+    </script>
 </body>
 </html>
