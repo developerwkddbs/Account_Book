@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 
 app = Flask(__name__)
@@ -70,6 +70,32 @@ def delete(record_id):
     conn.commit()
     conn.close()
     return redirect(url_for("index"))
+
+@app.route("/stats")
+def stats():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT created_at,
+               SUM(CASE WHEN type='income' THEN amount ELSE 0 END) as income,
+               SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) as expense
+        FROM records
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at)
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    labels = [r[0][:10] for r in rows]
+    income_data = [r[1] for r in rows]
+    expense_data = [r[2] for r in rows]
+
+    return jsonify({
+        "labels": labels,
+        "income": income_data,
+        "expense": expense_data
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

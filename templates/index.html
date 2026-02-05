@@ -6,78 +6,105 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>가계부</h1>
-    <br>
-    <h3>기간 조회</h3>
-    <form method="get" action="/">
-        <input type="text" id="start_date" name="start_date" placeholder="시작일 선택">
-        <input type="text" id="end_date" name="end_date" placeholder="종료일 선택">
-        <button type="submit">조회</button>
-        <a href="/">초기화</a>
-    </form>
-    <hr>
-
     <div class="container">
+        <h1>가계부</h1>
+        <br>
+        <h3>기간 조회</h3>
+        <form method="get" action="/">
+            <input type="text" id="start_date" name="start_date" placeholder="시작일 선택">
+            <input type="text" id="end_date" name="end_date" placeholder="종료일 선택">
+            <button type="submit">조회</button>
+            <a href="/">초기화</a>
+        </form>
+        <hr>
+
         <div class="card">
             <p>총 수입: {{ total_income }} 원</p>
             <p>총 지출: {{ total_expense }} 원</p>
             <h3>현재 잔액: {{ balance }} 원</h3>
         </div>
+
+        <h2>사용 그래프</h2>
+        <canvas id="usageChart" height="100"></canvas>
+
+        <form method="POST" action="/add">
+            <select name="type">
+                <option value="income">수입</option>
+                <option value="expense">지출</option>
+            </select>
+            <input type="number" name="amount" placeholder="금액" required>
+            <input type="text" name="memo" placeholder="메모">
+            <button type="submit">추가</button>
+        </form>
+
+        <h2>내역</h2>
+        <table border="1">
+            <tr>
+                <th>구분</th>
+                <th>금액</th>
+                <th>사용처</th>
+                <th>날짜</th>
+                <th>삭제</th>
+            </tr>
+            {% for r in records %}
+            <tr>
+                <td>
+                    {% if r[1] == 'income' %}
+                        <span class="badge-income">수입</span>
+                    {% elif r[1] == 'expense' %}
+                        <span class="badge-expense">지출</span>
+                    {% else %}
+                        {{ r[1] }}
+                    {% endif %}
+                </td>
+                <td>{{ r[2] }}</td>
+                <td>{{ r[3] }}</td>
+                <td>{{ r[4] }}</td>
+                <td>
+                    <a href="{{ url_for('delete', record_id=r[0]) }}"
+                       onclick="return confirm('해당 기록을 삭제하시겠습니까?');">
+                        삭제
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
     </div>
+    <script>
+        fetch("/stats")
+        .then(res => res.json())
+        .then(data => {
+            const ctx = document.getElementById("usageChart").getContext("2d");
 
-    <div style="margin: 20px 0; padding: 10px; border: 1px solid #ccc;">
-    <p>총 수입: {{ total_income }} 원</p>
-    <p>총 지출: {{ total_expense }} 원</p>
-    <h3>현재 잔액: {{ balance }} 원</h3>
-    </div>
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: "수입",
+                            data: data.income,
+                            tension: 0.3
+                        },
+                        {
+                            label: "지출",
+                            data: data.expense,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "top" }
+                    }
+                }
+            });
+        });
 
-    <form method="POST" action="/add">
-        <select name="type">
-            <option value="income">수입</option>
-            <option value="expense">지출</option>
-        </select>
-        <input type="number" name="amount" placeholder="금액" required>
-        <input type="text" name="memo" placeholder="메모">
-        <button type="submit">추가</button>
-    </form>
-
-    <h2>내역</h2>
-    <table border="1">
-        <tr>
-            <th>구분</th>
-            <th>금액</th>
-            <th>사용처</th>
-            <th>날짜</th>
-            <th>삭제</th>
-        </tr>
-        {% for r in records %}
-        <tr>
-            <td>
-                {% if r[1] == 'income' %}
-                    <span class="badge-income">수입</span>
-                {% elif r[1] == 'expense' %}
-                    <span class="badge-expense">지출</span>
-                {% else %}
-                    {{ r[1] }}
-                {% endif %}
-            </td>
-            <td>{{ r[2] }}</td>
-            <td>{{ r[3] }}</td>
-            <td>{{ r[4] }}</td>
-            <td>
-                <a href="{{ url_for('delete', record_id=r[0]) }}"
-                   onclick="return confirm('해당 기록을 삭제하시겠습니까?');">
-                    삭제
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-
-<script>
     flatpickr("#start_date", {
         locale: "ko",
         dateFormat: "Y-m-d",
@@ -87,8 +114,9 @@
     flatpickr("#end_date", {
         locale: "ko",
         dateFormat: "Y-m-d",
-        monthSelectorType: "static"
+         monthSelectorType: "static"
     });
 </script>
 
+</body>
 </html>
