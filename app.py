@@ -61,5 +61,14 @@ def index():
 
     return render_template("index.html", records=records)
 
+@app.route("/delete/<int:record_id>")
+def delete(record_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM records WHERE id = ?", (record_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("index"))
+
 if __name__ == "__main__":
     app.run(debug=True)
