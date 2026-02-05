@@ -27,16 +27,28 @@ def index():
     if request.method == "POST":
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
+        month = request.form.get("month")
     else:
         start_date = request.args.get("start_date")
         end_date = request.args.get("end_date")
+        month = request.args.get("month")
 
     query = "SELECT id, type, amount, memo, detail, created_at FROM records"
     params = []
+    where = []
 
+    #월 우선 필터(YYYY-MM)
+    if month:
+        where.append("strftime('%Y-%m', created_at) = ?")
+        params.append(month)
+
+    #기존 기간조회도 유지하고 싶으면 함께 적용
     if start_date and end_date:
         query += " WHERE date(created_at) BETWEEN ? AND ?"
         params.extend([start_date, end_date])
+
+    if where:
+        query += " WHERE " + " AND ".join(where)
 
     query += " ORDER BY id DESC"
 

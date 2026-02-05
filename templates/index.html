@@ -40,6 +40,10 @@
         </form>
 
         <h2>내역</h2>
+        <label style="display:flex; gap:8px; align-items:center; margin:10px 0;">
+            <span>내역 월</span>
+            <input type="month" id="recordsMonth">
+        </label>
         <table border="1">
             <tr>
                 <th>구분</th>
@@ -232,6 +236,33 @@
                     amountInput.value=Number(value).toLocaleString();
                 }
             })
+        }
+        //내역 월 선택 -> 서버에 month 전달
+        const recordsMonth = document.getElementById("recordsMonth");
+        if (recordsMonth) {
+            const params = new URLSearchParams(location.search);
+            const m = params.get("month");
+
+            // 기본값 세팅
+            if (m) {
+                recordsMonth.value = m;
+            } else {
+                const now = new Date();
+                recordsMonth.value =
+                    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            }
+
+            // 월 변경 시 페이지 재로드 (내역 갱신)
+            recordsMonth.addEventListener("change", () => {
+                const p = new URLSearchParams(location.search);
+                p.set("month", recordsMonth.value);
+
+                // 월 기준 볼 때 기간조회 제거 (권장)
+                p.delete("start_date");
+                p.delete("end_date");
+
+                location.href = "/?" + p.toString();
+            });
         }
     </script>
 </body>
