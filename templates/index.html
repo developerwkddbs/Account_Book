@@ -88,55 +88,74 @@
         <h2>수입 + 지출 항목 비율</h2>
         <div class="chart-wrapper">
             <canvas id="allPie"></canvas>
-        </div>
 
+            <label style="display:flex; gap:8px; align-items:center; margin:10px 0;">
+                <span>월 선택</span>
+                <input type="month" id="pieMonth">
+            </label>
+        </div>
     </div>
     <script>
-        //수입/지출 원그래프
-        fetch("/stats/all_pie")
+        let allPieChart = null;
+
+        function loadMonthPie(month) {
+            fetch(`/stats/month_pie?month=${encodeURIComponent(month)}`)
             .then(res => res.json())
             .then(data => {
                 const el = document.getElementById("allPie");
                 if (!el) return;
 
-                // 색상 자동 생성
-                const backgroundColors = data.labels.map(label => {
-                if (label.startsWith("수입")) {
-                    // 파란 계열 (수입)
-                    return `rgba(54, 162, 235, 0.7)`;
-                } else {
-                    // 빨간 계열 (지출)
-                    return `rgba(255, 99, 132, 0.7)`;
-                }
-                });
+                const backgroundColors = data.labels.map(label =>
+                label.startsWith("수입") ? "rgba(54, 162, 235, 0.7)" : "rgba(255, 99, 132, 0.7)"
+                );
+                const borderColors = data.labels.map(label =>
+                label.startsWith("수입") ? "rgba(54, 162, 235, 1)" : "rgba(255, 99, 132, 1)"
+                );
 
-                const borderColors = data.labels.map(label => {
-                if (label.startsWith("수입")) {
-                    return `rgba(54, 162, 235, 1)`;
-                } else {
-                    return `rgba(255, 99, 132, 1)`;
-                }
-                });
-
-                new Chart(el.getContext("2d"), {
-                type: "pie",
-                data: {
+                // 최초 1회 생성
+                if (!allPieChart) {
+                allPieChart = new Chart(el.getContext("2d"), {
+                    type: "pie",
+                    data: {
                     labels: data.labels,
                     datasets: [{
-                    data: data.data,
-                    backgroundColor: backgroundColors,
-                    borderColor: borderColors,
-                    borderWidth: 1
+                        data: data.data,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1
                     }]
-                },
-                options: {
+                    },
+                    options: {
                     responsive: true,
-                    plugins: {
-                    legend: { position: "bottom" }
+                    plugins: { legend: { position: "bottom" } }
                     }
-                }
                 });
+                return;
+                }
+
+                // 이후엔 "삭제" 말고 데이터만 갱신
+                allPieChart.data.labels = data.labels;
+                allPieChart.data.datasets[0].data = data.data;
+                allPieChart.data.datasets[0].backgroundColor = backgroundColors;
+                allPieChart.data.datasets[0].borderColor = borderColors;
+                allPieChart.update();
             });
+        }
+
+        // 월 input 기본값: 이번 달
+        const pieMonth = document.getElementById("pieMonth");
+        if (pieMonth) {
+            const now = new Date();
+            pieMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+            // 처음 로드시 이번 달 차트
+            loadMonthPie(pieMonth.value);
+
+            // 월 바꾸면 해당 월 차트로 전환
+            pieMonth.addEventListener("change", () => {
+            loadMonthPie(pieMonth.value);
+            });
+        }
         
         //날짜 선택기
         flatpickr("#start_date", {

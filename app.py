@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
 DB_NAME = "account_v2.db"
@@ -138,6 +139,35 @@ def init_db():
     """)
     conn.commit()
     conn.close()
+
+@app.route("/stats/month_pie")
+def stats_month_pie():
+    # month 형식: "YYYY-MM" (예: 2026-02)
+    month = request.args.get("month")
+    if not month:
+        month = datetime.now().strftime("%Y-%m")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT type, memo, SUM(amount) as total
+        FROM records
+        WHERE memo IS NOT NULL AND memo != ''
+          AND strftime('%Y-%m', created_at) = ?
+        GROUP BY type, memo
+        ORDER BY total DESC
+    """, (month,))
+    rows = cur.fetchall()
+    conn.close()
+
+    labels, data = [], []
+    for t, memo, total in rows:
+        prefix = "수입" if t == "income" else "지출"
+        labels.append(f"{prefix}-{memo}")
+        data.append(total)
+
+    return jsonify({"month": month, "labels": labels, "data": data})
 
 if __name__ == "__main__":
     ensure_detail_column()
