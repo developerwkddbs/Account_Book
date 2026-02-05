@@ -71,24 +71,33 @@ def delete(record_id):
     conn.close()
     return redirect(url_for("index"))
 
-@app.route("/stats/pie")
-def stats_pie():
+from flask import jsonify
+
+@app.route("/stats/all_pie")
+def stats_all_pie():
     conn = get_db()
     cur = conn.cursor()
 
+    # type + memo 기준 합계
     cur.execute("""
-        SELECT 
-            SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS income,
-            SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS expense
+        SELECT type, memo, SUM(amount) as total
         FROM records
+        WHERE memo IS NOT NULL AND memo != ''
+        GROUP BY type, memo
+        ORDER BY total DESC
     """)
-    income, expense = cur.fetchone()
+    rows = cur.fetchall()
     conn.close()
 
-    return jsonify({
-        "labels": ["수입", "지출"],
-        "data": [income or 0, expense or 0]
-    })
+    labels = []
+    data = []
+
+    for t, memo, total in rows:
+        prefix = "수입" if t == "income" else "지출"
+        labels.append(f"{prefix}-{memo}")
+        data.append(total)
+
+    return jsonify({"labels": labels, "data": data})
 
 if __name__ == "__main__":
     app.run(debug=True)

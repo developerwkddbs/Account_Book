@@ -73,32 +73,55 @@
 
         <br><br>
 
+        <h2>수입 + 지출 항목 비율</h2>
         <div class="chart-wrapper">
-            <canvas id="usageChart"></canvas>
+            <canvas id="allPie"></canvas>
         </div>
+
     </div>
     <script>
-        // ======================
-        // 1) 월별 수입 / 지출 그래프
-        // ======================
-        fetch("/stats/pie")
+        //수입/지출 원그래프
+        fetch("/stats/all_pie")
             .then(res => res.json())
             .then(data => {
-                const ctx = document.getElementById("usageChart").getContext("2d");
+                const el = document.getElementById("allPie");
+                if (!el) return;
 
-                new Chart(ctx, {
-                type: "pie",   // 또는 "doughnut"
+                // 색상 자동 생성
+                const backgroundColors = data.labels.map(label => {
+                if (label.startsWith("수입")) {
+                    // 파란 계열 (수입)
+                    return `rgba(54, 162, 235, 0.7)`;
+                } else {
+                    // 빨간 계열 (지출)
+                    return `rgba(255, 99, 132, 0.7)`;
+                }
+                });
+
+                const borderColors = data.labels.map(label => {
+                if (label.startsWith("수입")) {
+                    return `rgba(54, 162, 235, 1)`;
+                } else {
+                    return `rgba(255, 99, 132, 1)`;
+                }
+                });
+
+                new Chart(el.getContext("2d"), {
+                type: "pie",
                 data: {
-                labels: data.labels,
+                    labels: data.labels,
                     datasets: [{
-                    data: data.data
+                    data: data.data,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                      legend: { position: "bottom" }
-                   }
+                    legend: { position: "bottom" }
+                    }
                 }
                 });
             });
