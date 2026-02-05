@@ -7,6 +7,12 @@
 <body>
     <h1>가계부</h1>
 
+    <div style="margin: 20px 0; padding: 10px; border: 1px solid #ccc;">
+    <p>총 수입: {{ total_income }} 원</p>
+    <p>총 지출: {{ total_expense }} 원</p>
+    <h3>현재 잔액: {{ balance }} 원</h3>
+    </div>
+
     <form method="POST">
         <select name="type">
             <option value="income">수입</option>

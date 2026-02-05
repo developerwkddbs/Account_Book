@@ -38,7 +38,26 @@ def index():
 
     cur.execute("SELECT id, type, amount, memo, created_at FROM records ORDER BY id DESC")
     records = cur.fetchall()
+
+    #총 수입
+    cur.execute("SELECT SUM(amount) FROM records WHERE type = 'income'")
+    total_income=cur.fetchone()[0] or 0
+
+    #총 지출
+    cur.execute("SELECT SUM(amount) FROM records WHERE type = 'expense'")
+    total_expense=cur.fetchone()[0] or 0
+
+    balance=total_income-total_expense
+
     conn.close()
+
+    return render_template(
+        "index.html",
+        records=records,
+        total_income=total_income,
+        total_expense=total_expense,
+        balance=balance
+    )
 
     return render_template("index.html", records=records)
 
