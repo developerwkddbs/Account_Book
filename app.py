@@ -56,7 +56,8 @@ def index():
 @app.route("/add", methods=["POST"])
 def add():
     type_ = request.form.get("type")      # income / expense
-    amount = request.form.get("amount")
+    amount = request.form.get("amount").replace(",","")
+    amount=int(amount)
     memo = request.form.get("memo")
     detail=request.form.get("detail")
 

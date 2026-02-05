@@ -34,7 +34,7 @@
             </select>
 
             <select name="memo" id="usageSelect" required></select>
-            <input type="number" name="amount" placeholder="금액" required>
+            <input type="text" name="amount" id="amountInput" placeholder="금액" required>
             <input type="text" name="detail" placeholder="상세내역"/>
             <button type="submit">추가</button>
         </form>
@@ -60,7 +60,7 @@
                         {{ r[1] }}
                     {% endif %}
                 </td>
-                <td>{{ r[2] }}</td>  <!-- 금액 -->
+                <td>{{ "{:,}".format(r[2])+"원" }}</td>
                 <td>{{ r[3] }}</td>  <!-- 사용처 -->
                 <td>
                     <form method="post" action="{{ url_for('update_detail', record_id=r[0]) }}"
@@ -202,7 +202,18 @@
         }
 
         typeSelect.addEventListener("change", updateUsageOptions);
-        updateUsageOptions(); // 페이지 로드시 한번 세팅        
+        updateUsageOptions(); // 페이지 로드시 한번 세팅      
+        
+        const amountInput=document.getElementById("amountInput");
+
+        if(amountInput){
+            amountInput.addEventListener("input",()=>{
+                let value=amountInput.value.replace(/,/g,"");
+                if(!isNaN(value) && value !== ""){
+                    amountInput.value=Number(value).toLocaleString();
+                }
+            })
+        }
     </script>
 </body>
 </html>
