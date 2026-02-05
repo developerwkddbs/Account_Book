@@ -84,7 +84,17 @@ def delete(record_id):
     conn.close()
     return redirect(url_for("index"))
 
-from flask import jsonify
+@app.route("/update_detail/<int:record_id>", methods=["POST"])
+def update_detail(record_id):
+    detail = request.form.get("detail", "").strip()
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE records SET detail = ? WHERE id = ?", (detail, record_id))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("index"))
 
 @app.route("/stats/all_pie")
 def stats_all_pie():

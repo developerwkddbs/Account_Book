@@ -34,8 +34,8 @@
             </select>
 
             <select name="memo" id="usageSelect" required></select>
-            <input type="text" name="detail" placeholder="상세내역"/>
             <input type="number" name="amount" placeholder="금액" required>
+            <input type="text" name="detail" placeholder="상세내역"/>
             <button type="submit">추가</button>
         </form>
 
@@ -62,7 +62,16 @@
                 </td>
                 <td>{{ r[2] }}</td>  <!-- 금액 -->
                 <td>{{ r[3] }}</td>  <!-- 사용처 -->
-                <td>{{ r[4] or '-' }}</td>  <!-- 상세내역 -->
+                <td>
+                    <form method="post" action="{{ url_for('update_detail', record_id=r[0]) }}"
+                        style="display:flex; gap:6px; justify-content:center; align-items:center;">
+                    <input type="text" name="detail" value="{{ r[4] or '' }}" placeholder="상세내역"
+                        style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; width: 180px;">
+                    <button type="submit" style="padding:6px 10px; border-radius:6px; cursor:pointer;">
+                    저장
+                    </button>
+                </form>
+                </td>
                 <td>{{ r[5] }}</td>  <!-- 날짜 -->
                 <td>
                     <a href="{{ url_for('delete', record_id=r[0]) }}"
