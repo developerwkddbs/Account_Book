@@ -12,54 +12,55 @@ def index():
     conn = get_db()
     cur = conn.cursor()
 
-    # 테이블 없으면 생성
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT NOT NULL,        -- income / expense
-            amount INTEGER NOT NULL,
-            memo TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
     if request.method == "POST":
-        r_type = request.form["type"]
-        amount = request.form["amount"]
-        memo = request.form["memo"]
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date")
+    else:
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
 
-        cur.execute(
-            "INSERT INTO records (type, amount, memo) VALUES (?, ?, ?)",
-            (r_type, amount, memo)
-        )
-        conn.commit()
-        conn.close()
-        return redirect(url_for("index"))
+    query = "SELECT id, type, amount, memo, created_at FROM records"
+    params = []
 
-    cur.execute("SELECT id, type, amount, memo, created_at FROM records ORDER BY id DESC")
+    if start_date and end_date:
+        query += " WHERE date(created_at) BETWEEN ? AND ?"
+        params.extend([start_date, end_date])
+
+    query += " ORDER BY id DESC"
+
+    cur.execute(query, params)
     records = cur.fetchall()
 
-    #총 수입
-    cur.execute("SELECT SUM(amount) FROM records WHERE type = 'income'")
-    total_income=cur.fetchone()[0] or 0
-
-    #총 지출
-    cur.execute("SELECT SUM(amount) FROM records WHERE type = 'expense'")
-    total_expense=cur.fetchone()[0] or 0
-
-    balance=total_income-total_expense
+    total_income = sum(r[2] for r in records if r[1] == "income")
+    total_expense = sum(r[2] for r in records if r[1] == "expense")
+    balance = total_income - total_expense
 
     conn.close()
+    return render_template("index.html",
+                           records=records,
+                           total_income=total_income,
+                           total_expense=total_expense,
+                           balance=balance)
 
-    return render_template(
-        "index.html",
-        records=records,
-        total_income=total_income,
-        total_expense=total_expense,
-        balance=balance
+@app.route("/add", methods=["POST"])
+def add():
+    type_ = request.form.get("type")      # income / expense
+    amount = request.form.get("amount")
+    memo = request.form.get("memo")
+
+    if not type_ or not amount:
+        return redirect(url_for("index"))
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO records (type, amount, memo, created_at) VALUES (?, ?, ?, datetime('now'))",
+        (type_, int(amount), memo)
     )
+    conn.commit()
+    conn.close()
 
-    return render_template("index.html", records=records)
+    return redirect(url_for("index"))
 
 @app.route("/delete/<int:record_id>")
 def delete(record_id):

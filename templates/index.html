@@ -6,6 +6,17 @@
 </head>
 <body>
     <h1>가계부</h1>
+    <br>
+    <h3>기간 조회</h3>
+    <form method="get" action="/">
+        시작일:
+        <input type="date" name="start_date">
+        종료일:
+        <input type="date" name="end_date">
+        <button type="submit">조회</button>
+        <a href="/">초기화</a>
+    </form>
+    <hr>
 
     <div style="margin: 20px 0; padding: 10px; border: 1px solid #ccc;">
     <p>총 수입: {{ total_income }} 원</p>
@@ -13,7 +24,7 @@
     <h3>현재 잔액: {{ balance }} 원</h3>
     </div>
 
-    <form method="POST">
+    <form method="POST" action="/add">
         <select name="type">
             <option value="income">수입</option>
             <option value="expense">지출</option>
@@ -28,20 +39,28 @@
         <tr>
             <th>구분</th>
             <th>금액</th>
-            <th>메모</th>
+            <th>사용처</th>
             <th>날짜</th>
-            <th>관리</th>
+            <th>삭제</th>
         </tr>
         {% for r in records %}
         <tr>
-            <td>{{ r[1] }}</td>
+            <td>
+                {% if r[1] == 'income' %}
+                    수입
+                {% elif r[1] == 'expense' %}
+                    지출
+                {% else %}
+                    {{ r[1] }}
+                {% endif %}
+            </td>
             <td>{{ r[2] }}</td>
             <td>{{ r[3] }}</td>
             <td>{{ r[4] }}</td>
             <td>
                 <a href="{{ url_for('delete', record_id=r[0]) }}"
-                onclick="return confirm('해당 기록을 삭제하시겠습니까?');">
-                삭제
+                   onclick="return confirm('해당 기록을 삭제하시겠습니까?');">
+                    삭제
                 </a>
             </td>
         </tr>
